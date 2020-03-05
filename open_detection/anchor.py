@@ -104,7 +104,7 @@ def matching(anchors, gt_bboxes, gt_labels, threshold_pos=0.5, threshold_neg=0.4
     # gather
     labels = gt_labels[max_id_for_anchors]
     bboxes = gt_bboxes[max_id_for_anchors]
-    return matched, bboxes, labels
+    return matched, bboxes, labels, max_id_for_anchors
 
 
 def bbox2offset(anchors, bboxes):

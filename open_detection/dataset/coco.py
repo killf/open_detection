@@ -113,8 +113,8 @@ def enforce_size(img, bbox, masks, image_size=550, proto_output_size=138):
 
 
 def train(data_root,
+          anchors,
           kind="2017",
-          anchors=None,
           image_size=550,
           proto_output_size=138,
           threshold_pos=0.5,
@@ -128,28 +128,31 @@ def train(data_root,
           use_multiprocess_reader=True):
     def transform(data):
         image = data["image"]
-        gt_labels = data["gt_labels"]
-        gt_bboxes = data["gt_bboxes"]
-        gt_masks = data["gt_masks"]
-        matched = []
+        gt_labels_origin = data["gt_labels"]
+        gt_bboxes_origin = data["gt_bboxes"]
+        gt_masks_origin = data["gt_masks"]
 
-        image, gt_bboxes, gt_masks = enforce_size(image, gt_bboxes, gt_masks, image_size=image_size,
+        image, gt_bboxes, gt_masks = enforce_size(image, gt_bboxes_origin, gt_masks_origin, image_size=image_size,
                                                   proto_output_size=proto_output_size)
 
-        gt_labels = np.array(gt_labels, dtype=np.int)
+        gt_labels = np.array(gt_labels_origin, dtype=np.int)
         gt_bboxes = np.array(gt_bboxes, dtype=np.float32)
-        gt_masks = np.stack(gt_masks)
 
-        if anchors is not None:
-            matched, gt_bboxes, gt_labels = matching(anchors, gt_bboxes, gt_labels,
-                                                     threshold_pos=threshold_pos,
-                                                     threshold_neg=threshold_neg)
+        matched, gt_bboxes, gt_labels, id_for_anchors = matching(anchors, gt_bboxes, gt_labels,
+                                                                 threshold_pos=threshold_pos,
+                                                                 threshold_neg=threshold_neg)
+        gt_bboxes = bbox2offset(anchors, gt_bboxes)
+
         return {
             "image": image,
+            "gt_labels_origin": gt_labels_origin,
+            "gt_bboxes_origin": gt_bboxes_origin,
+            "gt_masks_origin": gt_masks_origin,
             "gt_labels": gt_labels,
             "gt_bboxes": gt_bboxes,
             "gt_masks": gt_masks,
-            "matched": matched
+            "matched": matched,
+            "id_for_anchors": id_for_anchors
         }
 
     def batch_reader():
@@ -163,10 +166,14 @@ def train(data_root,
                 if len(batch) == batch_size:
                     yield {
                         "image": np.stack([item.get("image") for item in batch]),
+                        "gt_labels_origin": [item.get("gt_labels_origin") for item in batch],
+                        "gt_bboxes_origin": [item.get("gt_bboxes_origin") for item in batch],
+                        "gt_masks_origin": [item.get("gt_masks_origin") for item in batch],
                         "gt_labels": np.stack([item.get("gt_labels") for item in batch]),
                         "gt_bboxes": np.stack([item.get("gt_bboxes") for item in batch]),
                         "gt_masks": [item.get("gt_masks") for item in batch],
-                        "matched": np.stack([item.get("matched") for item in batch])
+                        "matched": np.stack([item.get("matched") for item in batch]),
+                        "id_for_anchors": [item.get("id_for_anchors") for item in batch]
                     }
                     batch = []
 
@@ -178,6 +185,7 @@ def train(data_root,
                 yield data
                 if cnt >= total_iter:
                     break
+
         return _reader
     else:
         if sys.platform == "win32":
