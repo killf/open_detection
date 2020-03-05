@@ -9,6 +9,7 @@ setup(
     license="Apache2.0",
     description="",
     packages=find_packages(),
+    install_requires=["numpy"],
     python_requires='>=3.7',
     long_description="",
     classifiers=[],
