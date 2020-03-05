@@ -168,10 +168,17 @@ def train(data_root,
                         "gt_masks": [item.get("gt_masks") for item in batch],
                         "matched": np.stack([item.get("matched") for item in batch])
                     }
-                    batch.clear()
+                    batch = []
 
     if not use_multiprocess_reader:
-        return batch_reader
+        def _reader():
+            cnt = 0
+            for data in batch_reader():
+                cnt += 1
+                yield data
+                if cnt >= total_iter:
+                    break
+        return _reader
     else:
         if sys.platform == "win32":
             print("multiprocess is not fully compatible with Windows, "

@@ -12,9 +12,10 @@ anchors = od.anchor.generate_anchors(img_size=550,
 
 reader = od.dataset.coco.train("/home/killf/data/数据集/mscoco",
                                anchors=anchors,
-                               num_workers=3,
+                               num_workers=2,
                                batch_size=4,
                                max_queue=8,
+                               total_iter=100,
                                use_multiprocess_reader=False)
 for data in reader():
     print(data.get("image").shape)
