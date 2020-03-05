@@ -87,7 +87,7 @@ def matching(anchors, gt_bboxes, gt_labels, threshold_pos=0.5, threshold_neg=0.4
     :param gt_labels: (num_bboxes,)
     :param threshold_pos: default value is 0.5
     :param threshold_neg: default value is 0.4
-    :return:
+    :return: matched: (num_anchors,) in [-1, 0, 1], bboxes: (num_anchors, 4) => [x1, y1, x2, y2], labels: (num_anchors,)
     """
     # calculate iou => [num_anchors, num_bboxes]
     iou = calc_iou(anchors, gt_bboxes)
@@ -111,7 +111,7 @@ def bbox2offset(anchors, bboxes):
     """
     :param anchors: (N, 4) => [x1, y1, x2, y2]
     :param bboxes: (N, 4) => [x1, y1, x2, y2]
-    :return: (N, 4) => [cx, cy, w, h]
+    :return: (N, 4) => r[cx, cy, w, h]
     """
     assert anchors.ndim == 2 and anchors.shape[1] == 4
     assert bboxes.ndim == 2 and bboxes.shape[1] == 4
@@ -136,6 +136,11 @@ def bbox2offset(anchors, bboxes):
 
 
 def offset2bbox(anchors, offset):
+    """
+    :param anchors: anchors: (N, 4) => [x1, y1, x2, y2]
+    :param offset: (N, 4) => r[cx, cy, w, h]
+    :return: (N, 4) => [x1, y1, x2, y2]
+    """
     # convert to center form
     w = anchors[:, 2] - anchors[:, 0]
     h = anchors[:, 3] - anchors[:, 1]
