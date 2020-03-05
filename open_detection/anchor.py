@@ -133,3 +133,22 @@ def bbox2offset(anchors, bboxes):
     g_hat_h = np.log(center_anchors[:, 3] / center_gt[:, 3])
     offset = np.stack([g_hat_cx, g_hat_cy, g_hat_w, g_hat_h], axis=-1)
     return offset
+
+
+def offset2bbox(anchors, offset):
+    # convert to center form
+    w = anchors[:, 2] - anchors[:, 0]
+    h = anchors[:, 3] - anchors[:, 1]
+    center_anchors = np.stack([anchors[:, 0] + (w / 2), anchors[:, 1] + (h / 2), w, h], axis=-1)
+
+    # convert from center form
+    g_hat_cx, g_hat_cy, g_hat_w, g_hat_h = offset[:, 0], offset[:, 1], offset[:, 2], offset[:, 3]
+    bboxes_cx = g_hat_cx * center_anchors[:, 2] + center_anchors[:, 0]
+    bboxes_cy = g_hat_cy * center_anchors[:, 3] + center_anchors[:, 1]
+    bboxes_w = center_anchors[:, 2] / np.exp(g_hat_w)
+    bboxes_h = center_anchors[:, 3] / np.exp(g_hat_h)
+
+    bboxes_x = bboxes_cx - bboxes_w / 2
+    bboxes_y = bboxes_cy - bboxes_h / 2
+    bboxes = np.stack([bboxes_x, bboxes_y, bboxes_x + bboxes_w, bboxes_y + bboxes_h], axis=-1)
+    return bboxes

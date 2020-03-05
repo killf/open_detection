@@ -15,3 +15,6 @@ gt_labels = np.array([3, 7], dtype=np.int)
 matched, bboxes, labels = od.anchor.matching(anchors, gt_bboxes, gt_labels)
 
 offset = od.anchor.bbox2offset(anchors, bboxes)
+bboxes2 = od.anchor.offset2bbox(anchors, offset)
+
+print(np.abs(bboxes - bboxes2).max())
