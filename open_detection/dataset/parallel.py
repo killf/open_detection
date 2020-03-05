@@ -28,7 +28,7 @@ signal.signal(signal.SIGTERM, _reader_quit)
 signal.signal(signal.SIGINT, _term_group)
 
 
-class ParallelGenerator(object):
+class ParallelGenerator:
     """
     Builds a queue out of a data generator.
 
