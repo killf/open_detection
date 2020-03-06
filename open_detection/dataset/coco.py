@@ -59,17 +59,14 @@ class COCODataSet:
             return
 
         # 2.shuffle
-        if self.shuffle:
-            if self.shuffle_seed is not None:
-                np.random.seed(self.shuffle_seed)
-            np.random.shuffle(self.image_ids)
+        # if self.shuffle:
+        #     if self.shuffle_seed is not None:
+        #         np.random.seed(self.shuffle_seed)
+        #     np.random.shuffle(self.image_ids)
 
         # 3.train or val
         for img_id in self.image_ids:
-            data = self._load_data_item(img_id)
-            if data is None:
-                continue
-            yield data
+            yield self._load_data_item(img_id)
 
 
 def enforce_size(img, bbox, masks, image_size=550, proto_output_size=138):

@@ -3,7 +3,7 @@ import open_detection as od
 # dataset = od.dataset.coco.COCODataSet("/home/killf/data/数据集/mscoco")
 # while True:
 #     for data in dataset:
-#         print(data.get("image").shape, len(data.get("gt_bboxes")))
+#         print(data)
 
 anchors = od.anchor.generate_anchors(img_size=550,
                                      feature_map_size=[69, 35, 18, 9, 5],
