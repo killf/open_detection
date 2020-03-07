@@ -4,7 +4,7 @@ import numpy as np
 anchors = od.anchor.generate_anchors(img_size=550,
                                      feature_map_size=[69, 35, 18, 9, 5],
                                      aspect_ratio=[1, 0.5, 2],
-                                     scale=[24, 48, 96, 192, 384])
+                                     scale=[24, 48, 96, 192, 384],keep_dim=True)
 
 print(anchors.shape)
 

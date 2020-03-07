@@ -59,10 +59,10 @@ class COCODataSet:
             return
 
         # 2.shuffle
-        # if self.shuffle:
-        #     if self.shuffle_seed is not None:
-        #         np.random.seed(self.shuffle_seed)
-        #     np.random.shuffle(self.image_ids)
+        if self.shuffle:
+            if self.shuffle_seed is not None:
+                np.random.seed(self.shuffle_seed)
+            np.random.shuffle(self.image_ids)
 
         # 3.train or val
         for img_id in self.image_ids:

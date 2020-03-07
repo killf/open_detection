@@ -2,7 +2,7 @@ import numpy as np
 from math import sqrt
 
 
-def generate_anchors(img_size, feature_map_size, aspect_ratio, scale):
+def generate_anchors(img_size, feature_map_size, aspect_ratio, scale, crop_out_of_range=True, keep_dim=False):
     """
     ```
     prior_boxes = od.anchor.generate_anchors(img_size=550,
@@ -12,31 +12,64 @@ def generate_anchors(img_size, feature_map_size, aspect_ratio, scale):
 
     print(prior_boxes.shape)
     ```
-    :param img_size: 
-    :param feature_map_size: 
-    :param aspect_ratio: 
-    :param scale: 
-    :return: (N, 4) => [x1, y1, x2, y2]
+    :param img_size:
+    :param feature_map_size:
+    :param aspect_ratio:
+    :param scale:
+    :param crop_out_of_range:
+    :param keep_dim:
+    :return: (N, 4) => [x1, y1, x2, y2], if not keep_dim
+             (N, fea_size, fea_size, ar_size, 4) => [x1, y1, x2, y2], if keep_dim
     """
-    prior_boxes = []
-    for idx, f_size in enumerate(feature_map_size):
-        for j in range(f_size):
-            for i in range(f_size):
-                f_k = img_size / (f_size + 1)
-                x = f_k * (i + 1)
-                y = f_k * (j + 1)
-                for ars in aspect_ratio:
-                    a = sqrt(ars)
-                    w = scale[idx] * a
-                    h = scale[idx] / a
-                    # directly use point form here => [x1, y1, x2, y2]
-                    y1 = max(0, y - (h / 2))
-                    x1 = max(0, x - (w / 2))
-                    y2 = min(img_size, y + (h / 2))
-                    x2 = min(img_size, x + (w / 2))
-                    prior_boxes += [x1, y1, x2, y2]
+    fea_sizes = feature_map_size
+    aspect_ratios = aspect_ratio
+    anchor_sizes = scale
 
-    return np.array(prior_boxes, dtype=np.float32).reshape(-1, 4)
+    ar = np.array(aspect_ratios, dtype=np.float32)
+    ar = np.sqrt(ar)
+
+    prior_boxes = []
+    for fea_size, anchor_size in zip(fea_sizes, anchor_sizes):
+        x = np.arange(fea_size)
+        y = np.arange(fea_size)
+        gx, gy = np.meshgrid(x, y)
+
+        s = float(img_size) / (fea_size + 1)
+
+        gcx = (gx + 1) * s
+        gcy = (gy + 1) * s
+        gcx = np.reshape(gcx, [fea_size, fea_size, 1]).astype(np.float32)
+        gcy = np.reshape(gcy, [fea_size, fea_size, 1]).astype(np.float32)
+
+        ws = np.ones([fea_size, fea_size, len(aspect_ratios)], dtype=np.float32) * anchor_size
+        hs = np.copy(ws)
+
+        ar2 = np.repeat(ar, fea_size * fea_size)
+        ar2 = np.reshape(ar2, [len(aspect_ratios), fea_size, fea_size])
+        ar2 = np.transpose(ar2, [1, 2, 0])
+
+        ws *= ar2
+        hs /= ar2
+
+        gx1 = gcx - ws / 2
+        gy1 = gcy - hs / 2
+        gx2 = gx1 + ws
+        gy2 = gy1 + hs
+
+        if crop_out_of_range:
+            gx1 = np.maximum(gx1, 0)
+            gy1 = np.maximum(gy1, 0)
+            gx2 = np.minimum(gx2, img_size)
+            gy2 = np.minimum(gy2, img_size)
+
+        anchor = np.stack([gx1, gy1, gx2, gy2], axis=-1)
+        prior_boxes.append(anchor)
+
+    if not keep_dim:
+        prior_boxes = [np.reshape(anchor, [-1, 4]) for anchor in prior_boxes]
+        prior_boxes = np.concatenate(prior_boxes, axis=0)
+
+    return prior_boxes
 
 
 def calc_area(bboxes):

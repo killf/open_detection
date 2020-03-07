@@ -16,6 +16,6 @@ reader = od.dataset.coco.train("/home/killf/data/数据集/mscoco",
                                batch_size=4,
                                max_queue=8,
                                total_iter=100,
-                               use_multiprocess_reader=False)
+                               use_multiprocess_reader=True)
 for data in reader():
     print(data.get("image").shape)
